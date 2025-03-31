@@ -32,10 +32,20 @@ def gaussian_wasserstein(gauss: D.MultivariateNormal, gauss2: D.MultivariateNorm
     return np.sqrt(wasserstein.item())
 
 class LDSampler:
-    """Implementation of the unadjusted Langevin algorithm using Euler-Maruyama discretization
     """
-    def __init__(self, lr: float, thinning: int, beta: float, metric: str = "W2"):
-        self.metric = metric
+    """
+    def __init__(self, lr: float, thinning: int, beta: float):
+        """Implementation of Langevin Dynamics (AKA the Unadjusted Langevin Algorithm)
+
+        NOTE: Using an Euler-Maruyama discretization, higher-accuracy results should use a higher order method (e.g. SRK)
+
+        Args:
+            lr (float): Learning rate (AKA stepsize). 
+            thinning (int): Number of steps to take per sample. Larger thinning = fewer data points + faster code,
+                 smaller thinning = more data points + slower code
+            beta (float): Inverse temperature (1 should be sufficient, 
+                unless you want to specifically test the dependence on temperature)
+        """
         self.thinning = thinning
         self.lr = lr
         self.beta = beta
@@ -86,7 +96,6 @@ class BLDSampler:
                  thinning: int, 
                  beta: float, 
                  blocks: Union[int, Iterable],
-                 metric: str = "W2", 
                  selection: str = 'cyclic'):
         """Implementation of Block Langevin Dynamics
 
@@ -97,10 +106,8 @@ class BLDSampler:
             thinning (int): thinning parameter (store a sample every `thinning` iterations)
             beta (float): Inverse temperature
             blocks (Union[int, Iterable]): Number of blocks
-            metric (str, optional): Metric to compute. Defaults to "W2".
             selection (str, optional): Selection strategy, either "random" or "cyclic". Defaults to 'cyclic'.
         """
-        self.metric = metric
         self.thinning = thinning
         self.lr = lr
         self.beta = beta
@@ -264,7 +271,7 @@ if __name__ == '__main__':
     # Test the effect of fixed perturbations on convergence
     for blocks in [5]:
         epochs = 10
-        for perurbation in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
+        for perurbation in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0]:
             perturb = (1 + perurbation * torch.randn(N, N, device=device)) * simmat
             def grad(x):
                 return perturb.matmul(x)
